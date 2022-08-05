@@ -13,7 +13,7 @@ DWORD MainThread(LPVOID)
 	if (!Pattern)
 		Utils::ThrowErrorExit("Please make sure you have injected into the FortniteClient-Win64-Shipping process.");
 
-	if (!reinterpret_cast<FString * (__fastcall*)(void*)>(Pattern)(&EngineVersion)->ToString().find("3700114"))
+	if (!reinterpret_cast<FString*(*)(void*)>(Pattern)(&EngineVersion)->ToString().find("3700114"))
 		Utils::ThrowErrorExit("Nacro only supports Fortnite 1.7.2, please make sure you have launched the correct build.");
 
 	Globals::InitGlobalsFrontend();
@@ -21,8 +21,9 @@ DWORD MainThread(LPVOID)
 	//Will full remove when we get inventory since it won't be needed then
 	//Utils::PatchAbilities();
 
-	static_cast<AFortGameModeFrontEnd*>(Globals::GEngine->GameViewport->World->AuthorityGameMode)->Say
-	(L"Welcome to Nacro!\nCreated by ozne, Fischsalat, and absoluteSpacehead.");
+	//COMMENTED BECAUSE SOMETIMES AND *ONLY* SOMETIMES IT FUCKING CRASHES. FUCK THIS FUNC.
+	//static_cast<AFortGameModeFrontEnd*>(Globals::GEngine->GameViewport->World->AuthorityGameMode)->Say
+	//(L"Welcome to Nacro!\nCreated by ozne, Fischsalat, and absoluteSpacehead.");
 
 	return NULL;
 }

@@ -14,25 +14,6 @@ namespace World
 		class UObject* MapTexture;
 	};
 
-	//Spawn a new actor and return it
-	inline AActor* SpawnActor(UClass* ActorClass, FVector Location, FRotator Rotation)
-	{
-		FQuat Quat;
-		FTransform Transform;
-		Quat.W = 0;
-		Quat.X = Rotation.Pitch;
-		Quat.Y = Rotation.Roll;
-		Quat.Z = Rotation.Yaw;
-
-		Transform.Rotation = Quat;
-		Transform.Scale3D = FVector{ 1,1,1 };
-		Transform.Translation = Location;
-
-		auto Actor = Globals::GameplayStatics->STATIC_BeginSpawningActorFromClass(Globals::GEngine->GameViewport->World, ActorClass, Transform, false, nullptr);
-		Globals::GameplayStatics->STATIC_FinishSpawningActor(Actor, Transform);
-		return Actor;
-	}
-
 	//Place all loaded items into the map, and equip it for faster future equipping
 	inline void LoadItems()
 	{
@@ -40,20 +21,17 @@ namespace World
 		{
 			Globals::Pickaxe = UObject::FindObject<UFortWeaponItemDefinition>("FortWeaponMeleeItemDefinition WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
 
-			for (int i = 0; i < UObject::GetGlobalObjects().Num(); ++i)
+			for (int i = 0; i < UObject::GObjects->Num(); ++i)
 			{
-				auto Objects = UObject::GetGlobalObjects().GetByIndex(i);
+				auto Object = UObject::GObjects->GetByIndex(i);
 
-				if (Objects != nullptr)
+				if (Object && !Object->IsDefaultObject())
 				{
-					if (Objects->GetFullName().find("FortWeaponRangedItemDefinition ") != NPOS || Objects->GetFullName().find("FortWeaponMeleeItemDefinition ") != NPOS || Objects->GetFullName().find("FortBuildingItemDefinition ") != NPOS)
-						if (Objects->GetFullName().find("Default__FortBuildingItemDefinition") != NPOS || Objects->GetFullName().find("Default__FortWeaponMeleeItemDefinition") != NPOS || Objects->GetFullName().find("Default__FortWeaponRangedItemDefinition") != NPOS)
-							continue;
-						else
-						{
-							Globals::ItemsMap.insert_or_assign(Objects->GetName(), static_cast<UFortWeaponItemDefinition*>(Objects));
-							Player::Equip(static_cast<UFortWeaponItemDefinition*>(Objects), FGuid{ rand() % 9999,rand() % 9999,rand() % 9999,rand() % 9999 });
-						}
+					if (Object->IsA(UFortWeaponRangedItemDefinition::StaticClass()) || Object->IsA(UFortWeaponMeleeItemDefinition::StaticClass()) || Object->IsA(UFortBuildingItemDefinition::StaticClass()))
+					{
+							Globals::ItemsMap.insert_or_assign(Object->GetName(), static_cast<UFortWeaponItemDefinition*>(Object));
+							Player::Equip(static_cast<UFortWeaponItemDefinition*>(Object), FGuid{ rand() % 9999,rand() % 9999,rand() % 9999,rand() % 9999 });
+					}
 				}
 			}
 		}

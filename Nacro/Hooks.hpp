@@ -22,10 +22,10 @@ static CollectGarbage_Internal OriginalGC = *Utils::Offset<CollectGarbage_Intern
 namespace Hooks
 {
 	void CreateHooks();
-	void* PEHook(UObject* Object, SDK::UFunction* Function, void* Parameters);
+	void PEHook(UObject* Object, SDK::UFunction* Function, void* Parameters);
 	void* CGHook(int32_t KeepFlags, bool bPerformFullPurge);
 
-	void* PEHook(UObject* Object, SDK::UFunction* Function, void* Parameters)
+	void PEHook(UObject* Object, SDK::UFunction* Function, void* Parameters)
 	{
 		std::string FullFuncName = Function->GetFullName();
 		std::string FuncName = Function->GetName();
@@ -35,7 +35,7 @@ namespace Hooks
 			//Get CharacterParts
 			Player::GrabCharacterParts();
 
-			Globals::GameplayStatics->STATIC_OpenLevel(Globals::GEngine->GameViewport->World, "Athena_Terrain", true, L"");
+			Globals::LocalPlayer->PlayerController->LocalTravel(L"Athena_Terrain");
 			Globals::bIsInLobby = false;
 		}
 
@@ -101,7 +101,7 @@ namespace Hooks
 
 		if (FuncName.find("ServerHandlePickup") != NPOS && Globals::bIsInGame)
 		{
-			auto Params = static_cast<AFortPlayerPawn_ServerHandlePickup_Params*>(Parameters);
+			auto Params = static_cast<Params::AFortPlayerPawn_ServerHandlePickup_Params*>(Parameters);
 
 			if (Params->Pickup->PrimaryPickupItemEntry.ItemDefinition->GetName() == "WID_Harvest_Pickaxe_Athena_C_T01")
 			{
@@ -129,10 +129,11 @@ namespace Hooks
 			}
 		}
 
+		//temp disable due to removed FName constructor (cant get from char anymore)
 		if (FuncName.find("ClientOnPawnDied") != NPOS && Globals::bIsInGame)
 		{
-			Globals::AthenaPawn->PlayAnimMontage(Globals::DeathMontage, 0.7, "");
-			Globals::VictoryDrone = World::SpawnActor(ABP_VictoryDrone_C::StaticClass(), Globals::AthenaPawn->K2_GetActorLocation(), FRotator{ 0,0,0 });
+			Globals::AthenaPawn->PlayAnimMontage(Globals::DeathMontage, 0.7, FName());
+			Globals::VictoryDrone = SpawnActor<ABP_VictoryDrone_C>(Globals::AthenaPawn->K2_GetActorLocation());
 		}
 
 		if (FullFuncName.find("Function BP_VictoryDrone.BP_VictoryDrone_C.OnSpawnOutAnimEnded") != NPOS && Globals::bIsInGame)
@@ -171,15 +172,15 @@ namespace Hooks
 
 		if (FuncName.find("CheatScript") != NPOS)
 		{
-			if (static_cast<UCheatManager_CheatScript_Params*>(Parameters)->ScriptName.IsValid() && Globals::bIsInGame)
+			if (static_cast<Params::UCheatManager_CheatScript_Params*>(Parameters)->ScriptName.IsValid() && Globals::bIsInGame)
 			{
-				if (!Cheats::HandleCheats(static_cast<UCheatManager_CheatScript_Params*>(Parameters)->ScriptName.ToString()))
+				if (!Cheats::HandleCheats(static_cast<Params::UCheatManager_CheatScript_Params*>(Parameters)->ScriptName.ToString()))
 					Globals::AthenaGameMode->Say
 					(L"CheatScript not recognized, please use \'cheatscript help\' for a list of available CheatScript commands.");
 			}
 		}
 
-		return OriginalPE(Object, Function, Parameters);
+		OriginalPE(Object, Function, Parameters);
 	}
 
 	void* CGHook(int32_t KeepFlags, bool bPerformFullPurge)
@@ -189,20 +190,20 @@ namespace Hooks
 
 	inline void CreateHooks()
 	{
+		std::cout << MH_StatusToString(MH_Initialize()) << "\n";
+
 		if (Globals::bIsInLobby && !Globals::bIsInitialized)
 		{
-			MH_Initialize();
-
-			uintptr_t* PEAddress = Utils::Offset<uintptr_t>(Offsets::ProcessEventOffset);
-			MH_CreateHook(reinterpret_cast<LPVOID>(PEAddress), PEHook, reinterpret_cast<LPVOID*>(&OriginalPE));
-			MH_EnableHook(reinterpret_cast<LPVOID>(PEAddress));
+			uintptr_t PEAddress = uintptr_t(GetModuleHandle(0)) + Offsets::ProcessEventOffset;
+			std::cout << MH_StatusToString(MH_CreateHook(reinterpret_cast<LPVOID>(PEAddress), PEHook, reinterpret_cast<LPVOID*>(&OriginalPE))) << "\n";
+			std::cout << MH_StatusToString(MH_EnableHook(reinterpret_cast<LPVOID>(PEAddress))) << "\n";
 		}
 
 		if (Globals::bIsInitialized && !Globals::bIsInLobby)
 		{
 			uintptr_t* CGAddress = Utils::Offset<uintptr_t>(Offsets::CGInternalOffset);
-			MH_CreateHook(reinterpret_cast<LPVOID>(CGAddress), CGHook, reinterpret_cast<LPVOID*>(&OriginalGC));
-			MH_EnableHook(reinterpret_cast<LPVOID>(CGAddress));
+			std::cout << MH_StatusToString(MH_CreateHook(reinterpret_cast<LPVOID>(CGAddress), CGHook, reinterpret_cast<LPVOID*>(&OriginalGC))) << "\n";
+			std::cout << MH_StatusToString(MH_EnableHook(reinterpret_cast<LPVOID>(CGAddress))) << "\n";
 		}
 	}
 }

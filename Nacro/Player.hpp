@@ -3,14 +3,39 @@
 #include "Globals.hpp"
 #define NPOS std::string::npos
 
+template<typename RetActorType = AActor>
+inline RetActorType* SpawnActor(FVector Location = { 0.0f, 0.0f,0.0f }, AActor* Owner = nullptr)
+{
+	FTransform SpawnTransform;
+
+	SpawnTransform.Translation = Location;
+	SpawnTransform.Scale3D = FVector{ 1, 1, 1 };
+	SpawnTransform.Rotation = FQuat{ 0, 0, 0 };
+
+
+	AActor* FirstActor = Globals::GameplayStatics->BeginDeferredActorSpawnFromClass(Globals::GEngine->GameViewport->World, RetActorType::StaticClass(), SpawnTransform, ESpawnActorCollisionHandlingMethod::AlwaysSpawn, Owner);
+
+	if (FirstActor)
+	{
+		AActor* FinalActor = Globals::GameplayStatics->FinishSpawningActor(FirstActor, SpawnTransform);
+
+		if (FinalActor)
+		{
+			return reinterpret_cast<RetActorType*>(FinalActor);
+		}
+	}
+
+	return nullptr;
+}
+
 namespace Player
 {
 	//We call this in frontend to get the characterparts currently on our player. This sets the variables in Globals, so we can apply them ingame.
 	inline void GrabCharacterParts()
 	{
-		for (int i = 0; i < UObject::GetGlobalObjects().Num(); ++i)
+		for (int i = 0; i < UObject::GObjects->Num(); ++i)
 		{
-			auto Objects = UObject::GetGlobalObjects().GetByIndex(i);
+			auto Objects = UObject::GObjects->GetByIndex(i);
 
 			if (Objects != nullptr)
 			{
@@ -31,10 +56,7 @@ namespace Player
 	//Spawn a new Athena pawn and set our pawn to it
 	inline void SpawnPlayer()
 	{
-		Globals::AthenaController->CheatManager->Summon(L"PlayerPawn_Athena_C");
-		SDK::TArray<AActor*> outActors;
-		Globals::GameplayStatics->STATIC_GetAllActorsOfClass(Globals::GEngine->GameViewport->World, SDK::APlayerPawn_Athena_C::StaticClass(), &outActors);
-		Globals::AthenaPawn = static_cast<AFortPlayerPawnAthena*>(outActors[0]);
+		Globals::AthenaPawn = SpawnActor<APlayerPawn_Athena_C>(Globals::AthenaController->K2_GetActorLocation());
 	}
 
 	//Set our player's CharacterParts

@@ -58,14 +58,13 @@ namespace Globals
 
 		uintptr_t ModuleBaseAddr = (uintptr_t)GetModuleHandle(NULL);
 		GEngine = *reinterpret_cast<UFortEngine**>(Utils::Offset<uintptr_t**>(Offsets::GEngineOffset));
-		FName::GNames = *reinterpret_cast<TNameEntryArray**>(Utils::Offset<uintptr_t**>(Offsets::GNamesOffset));
-		UObject::GObjects = reinterpret_cast<FUObjectArray*>(Utils::Offset<uintptr_t*>(Offsets::GUObjectArrayOffset));
+		UObject::GObjects = reinterpret_cast<TUObjectArray*>(Utils::Offset<uintptr_t**>(Offsets::TUObjectArrayOffset));
 
 		LocalPlayer = reinterpret_cast<UFortLocalPlayer*>(GEngine->GameInstance->LocalPlayers[0]);
-		GameplayStatics = reinterpret_cast<UGameplayStatics*>(UGameplayStatics::StaticClass());
+		GameplayStatics = reinterpret_cast<UGameplayStatics*>(UGameplayStatics::StaticClass()->DefaultObject);
 
 
-		auto pConsole = UConsole::StaticClass()->CreateDefaultObject<UConsole>();
+		auto pConsole = static_cast<UConsole*>(UConsole::StaticClass()->DefaultObject);
 		pConsole->Outer = Globals::LocalPlayer->ViewportClient;
 		Globals::LocalPlayer->ViewportClient->ViewportConsole = pConsole;
 	}

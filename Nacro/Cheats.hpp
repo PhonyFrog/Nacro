@@ -115,9 +115,9 @@ namespace Cheats
 
 				if (ShouldCheck)
 				{
-					for (int i = 0; i < UObject::GetGlobalObjects().Num(); ++i)
+					for (int i = 0; i < UObject::GObjects->Num(); ++i)
 					{
-						auto Objects = UObject::GetGlobalObjects().GetByIndex(i);
+						auto Objects = UObject::GObjects->GetByIndex(i);
 
 						if (Objects != nullptr)
 						{
@@ -143,9 +143,9 @@ namespace Cheats
 				}
 
 				//Spawn and set up our pickup
-				auto Pickup = static_cast<AFortPickupAthena*>(World::SpawnActor(AFortPickupAthena::StaticClass(), Globals::AthenaPawn->K2_GetActorLocation(), FRotator{ 0,0,0 }));
-				Pickup->K2_SetActorLocation(Globals::AthenaPawn->K2_GetActorLocation(), false, true, new FHitResult);
-				Pickup->TossPickup(Globals::AthenaPawn->K2_GetActorLocation(), nullptr, 1, false);
+				auto Pickup = SpawnActor<AFortPickupAthena>(Globals::AthenaPawn->K2_GetActorLocation());
+				Pickup->K2_SetActorLocation(Globals::AthenaPawn->K2_GetActorLocation(), false, new FHitResult, true);
+				Pickup->TossPickup(Globals::AthenaPawn->K2_GetActorLocation(), nullptr, 1);
 				Pickup->PrimaryPickupItemEntry.ItemDefinition = Globals::PickupItem;
 				Pickup->PrimaryPickupItemEntry.Count = 1;
 				Pickup->OnRep_PrimaryPickupItemEntry();
@@ -184,9 +184,9 @@ namespace Cheats
 
 				if (ShouldCheck)
 				{
-					for (int i = 0; i < UObject::GetGlobalObjects().Num(); ++i)
+					for (int i = 0; i < UObject::GObjects->Num(); ++i)
 					{
-						auto Objects = UObject::GetGlobalObjects().GetByIndex(i);
+						auto Objects = UObject::GObjects->GetByIndex(i);
 
 						if (Objects != nullptr)
 						{
@@ -243,9 +243,9 @@ namespace Cheats
 		if (Utils::ToLower(Parameters) == "dumpobjects")
 		{
 			std::ofstream txt("Objects_Dump.txt");
-			for (int i = 0; i < UObject::GetGlobalObjects().Num(); ++i)
+			for (int i = 0; i < UObject::GObjects->Num(); ++i)
 			{
-				auto Objects = UObject::GetGlobalObjects().GetByIndex(i);
+				auto Objects = UObject::GObjects->GetByIndex(i);
 
 				if (Objects != nullptr)
 					txt << Objects->GetFullName() << "\n";
@@ -259,9 +259,9 @@ namespace Cheats
 		if (Utils::ToLower(Parameters) == "dumpwids")
 		{
 			std::ofstream txt("WIDs_Dump.txt");
-			for (int i = 0; i < UObject::GetGlobalObjects().Num(); ++i)
+			for (int i = 0; i < UObject::GObjects->Num(); ++i)
 			{
-				auto Objects = UObject::GetGlobalObjects().GetByIndex(i);
+				auto Objects = UObject::GObjects->GetByIndex(i);
 
 				if (Objects != nullptr)
 				{
@@ -273,22 +273,6 @@ namespace Cheats
 				}
 			}
 			MessageBoxA(nullptr, "Successfully dumped all Weapon IDs to WIDs_Dump.txt.", "Success!", MB_ICONINFORMATION);
-			txt.close();
-
-			return true;
-		}
-
-		if (Utils::ToLower(Parameters) == "dumpnames")
-		{
-			std::ofstream txt("Names_Dump.txt");
-			for (int i = 0; i < FName::GNames->Num(); ++i)
-			{
-				auto currentName = (*FName::GNames)[i];
-
-				if (currentName != nullptr)
-					txt << currentName->GetAnsiName() << "\n";
-			}
-			MessageBoxA(nullptr, "Successfully dumped all names to Names_Dump.txt.", "Success!", MB_ICONINFORMATION);
 			txt.close();
 
 			return true;
